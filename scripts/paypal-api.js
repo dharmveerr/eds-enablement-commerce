@@ -36,8 +36,7 @@ async function requestJson(path, { method = 'POST', body, headers = {}, retryabl
     ...headers,
   };
 
-  let attempt = 0;
-  while (true) {
+  for (let attempt = 0; attempt <= DEFAULT_RETRIES; attempt += 1) {
     try {
       const response = await fetch(url, {
         method,
@@ -82,10 +81,21 @@ async function requestJson(path, { method = 'POST', body, headers = {}, retryabl
         };
       }
 
-      attempt += 1;
-      await sleep(2 ** attempt * 150);
+      await sleep(2 ** (attempt + 1) * 150);
     }
   }
+
+  return {
+    paypalOrderId: body?.paypalOrderId || null,
+    status: 'FAILED',
+    result: 'FAILED',
+    retryable: true,
+    orderNumber: null,
+    error: {
+      code: 'PAYPAL_API_ERROR',
+      message: 'PayPal request failed',
+    },
+  };
 }
 
 function normalizeOrderResponse(response, fallbackStatus) {
