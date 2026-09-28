@@ -158,7 +158,7 @@ export const renderServerError = async (container, contentElement) => renderCont
   },
 })(container));
 export const renderOutOfStock = async (container) => renderContainer(CONTAINERS.OUT_OF_STOCK, async () => CheckoutProvider.render(OutOfStock, { routeCart: () => rootLink('/cart'), onCartProductsUpdate: (items) => { cartApi.updateProductsFromCart(items).catch(console.error); } })(container));
-export const renderLoginForm = async (container) => renderContainer(CONTAINERS.LOGIN_FORM, async () => CheckoutProvider.render(LoginForm, { name: LOGIN_FORM_NAME, onSignInClick: async (initialEmailValue) => { const signInForm = document.createElement('div'); AuthProvider.render(AuthCombine, { signInFormConfig: { renderSignUpLink: true, initialEmailValue }, signUpFormConfig: { slots: { ...authPrivacyPolicyConsentSlot, } }, resetPasswordFormConfig: {}, })(signInForm); await showModal(signInForm); }, onSignOutClick: () => { authApi.revokeCustomerToken(); }, })(container));
+export const renderLoginForm = async (container) => renderContainer(CONTAINERS.LOGIN_FORM, async () => CheckoutProvider.render(LoginForm, { name: LOGIN_FORM_NAME, onSignInClick: async (initialEmailValue) => { const signInForm = document.createElement('div'); AuthProvider.render(AuthCombine, { signInFormConfig: { renderSignUpLink: true, initialEmailValue }, signUpFormConfig: { slots: { ...authPrivacyPolicyConsentSlot } }, resetPasswordFormConfig: {}, })(signInForm); await showModal(signInForm); }, onSignOutClick: () => { authApi.revokeCustomerToken(); }, })(container));
 export const renderShippingAddressFormSkeleton = async (container) => renderContainer(CONTAINERS.SHIPPING_ADDRESS_FORM_SKELETON, async () => AccountProvider.render(AddressForm, { fieldIdPrefix: 'shipping', isOpen: true, showFormLoader: true })(container));
 export const renderBillingAddressFormSkeleton = async (container) => renderContainer(CONTAINERS.BILLING_ADDRESS_FORM_SKELETON, async () => AccountProvider.render(AddressForm, { fieldIdPrefix: 'billing', isOpen: true, showFormLoader: true })(container));
 
@@ -170,7 +170,8 @@ export const renderPaymentMethods = async (container) => renderContainer(CONTAIN
   paypalSection.className = 'checkout-payment-methods__paypal';
 
   const paypalHeading = document.createElement('h3');
-  paypalHeading.textContent = (await fetchPlaceholders('placeholders/checkout.json'))?.Checkout?.PayPal?.heading || 'PayPal';
+  const checkoutPlaceholders = await fetchPlaceholders('placeholders/checkout.json');
+  paypalHeading.textContent = checkoutPlaceholders?.Checkout?.PayPal?.heading || 'PayPal';
   paypalSection.appendChild(paypalHeading);
 
   const buttonsMount = document.createElement('div');
