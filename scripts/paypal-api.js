@@ -4,8 +4,9 @@ const DEFAULT_API_PATH = '/api/paypal';
 const DEFAULT_RETRIES = 2;
 
 function createIdempotencyKey() {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID();
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi?.randomUUID) {
+    return cryptoApi.randomUUID();
   }
 
   return `paypal_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -24,8 +25,10 @@ function isRetryableError(error) {
   return message.includes('ETIMEDOUT') || message.includes('ECONNRESET') || message.includes('Failed to fetch');
 }
 
-async function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 async function requestJson(path, { method = 'POST', body, headers = {}, retryable = true } = {}) {
@@ -81,7 +84,7 @@ async function requestJson(path, { method = 'POST', body, headers = {}, retryabl
         };
       }
 
-      await sleep(2 ** (attempt + 1) * 150);
+      await delay(2 ** (attempt + 1) * 150);
     }
   }
 

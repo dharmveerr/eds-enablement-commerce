@@ -1,4 +1,9 @@
-import { createOrder, captureOrder, createMockPayPalOrderResponse, createMockPayPalCaptureResponse } from './paypal-api.js';
+import {
+  createOrder,
+  captureOrder,
+  createMockPayPalOrderResponse,
+  createMockPayPalCaptureResponse,
+} from './paypal-api.js';
 
 const originalFetch = global.fetch;
 const originalCrypto = globalThis.crypto;
