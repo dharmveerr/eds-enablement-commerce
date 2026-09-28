@@ -27,6 +27,10 @@
     "default": {
       "commerce-core-endpoint": "{ENDPOINT}",
       "commerce-endpoint": "{CS_ENDPOINT}",
+      "paypal-client-id": "$PAYPAL_CLIENT_ID",
+      "paypal-sdk-components": "buttons,card-fields",
+      "paypal-intent": "capture",
+      "paypal-currency": "USD",
       "headers": {
         "all": {
           "Store": "default"
