@@ -43,7 +43,6 @@ async function requestJson(path, {
     ...headers,
   };
 
-  // Retries must run sequentially, so awaiting inside the loop is intentional.
   /* eslint-disable no-await-in-loop */
   for (let attempt = 0; attempt <= DEFAULT_RETRIES; attempt += 1) {
     try {
