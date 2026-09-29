@@ -88,8 +88,6 @@ export default async function decorate(block) {
   block.innerHTML = '';
   block.appendChild(fragment);
 
-  const routeToWishlist = rootLink('/wishlist');
-
   function toggleEmptyCart(_state) {
     $wrapper.removeAttribute('hidden');
     $emptyCart.setAttribute('hidden', '');
@@ -100,7 +98,9 @@ export default async function decorate(block) {
       const miniPDPContent = await createMiniPDP(
         cartItem,
         async (_updateData) => {
-          const productName = cartItem.name || cartItem.product?.name || placeholders?.Global?.CartUpdatedProductName;
+          const productName = cartItem.name
+            || cartItem.product?.name
+            || placeholders?.Global?.CartUpdatedProductName;
           const message = placeholders?.Global?.CartUpdatedProductMessage?.replace('{product}', productName);
 
           currentNotification?.remove();
@@ -202,7 +202,12 @@ export default async function decorate(block) {
           const { item, defaultImageProps } = ctx;
           const anchorWrapper = document.createElement('a');
           anchorWrapper.href = createProductLink(item);
-          tryRenderAemAssetsImage(ctx, { alias: item.sku, imageProps: defaultImageProps, wrapper: anchorWrapper, params: { width: defaultImageProps.width, height: defaultImageProps.height } });
+          tryRenderAemAssetsImage(ctx, {
+            alias: item.sku,
+            imageProps: defaultImageProps,
+            wrapper: anchorWrapper,
+            params: { width: defaultImageProps.width, height: defaultImageProps.height },
+          });
         },
         Footer: (ctx) => {
           renderCartItemPromotions(ctx);

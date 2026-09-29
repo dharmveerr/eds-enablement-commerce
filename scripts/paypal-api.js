@@ -22,7 +22,9 @@ function isRetryableStatus(status) {
 
 function isRetryableError(error) {
   const message = String(error?.message || '');
-  return message.includes('ETIMEDOUT') || message.includes('ECONNRESET') || message.includes('Failed to fetch');
+  return message.includes('ETIMEDOUT')
+    || message.includes('ECONNRESET')
+    || message.includes('Failed to fetch');
 }
 
 function delay(ms) {
@@ -31,7 +33,9 @@ function delay(ms) {
   });
 }
 
-async function requestJson(path, { method = 'POST', body, headers = {}, retryable = true } = {}) {
+async function requestJson(path, {
+  method = 'POST', body, headers = {}, retryable = true,
+} = {}) {
   const url = new URL(path, getApiBaseUrl());
   const requestHeaders = {
     'Content-Type': 'application/json',
@@ -39,6 +43,8 @@ async function requestJson(path, { method = 'POST', body, headers = {}, retryabl
     ...headers,
   };
 
+  // Retries must run sequentially, so awaiting inside the loop is intentional.
+  /* eslint-disable no-await-in-loop */
   for (let attempt = 0; attempt <= DEFAULT_RETRIES; attempt += 1) {
     try {
       const response = await fetch(url, {
@@ -58,7 +64,8 @@ async function requestJson(path, { method = 'POST', body, headers = {}, retryabl
       }
 
       if (!response.ok) {
-        const error = new Error(parsed?.message || `PayPal API request failed with ${response.status}`);
+        const fallbackMessage = `PayPal API request failed with ${response.status}`;
+        const error = new Error(parsed?.message || fallbackMessage);
         error.status = response.status;
         error.code = parsed?.code || `HTTP_${response.status}`;
         error.details = parsed?.details;
@@ -69,7 +76,9 @@ async function requestJson(path, { method = 'POST', body, headers = {}, retryabl
 
       return parsed;
     } catch (error) {
-      const shouldRetry = retryable && attempt < DEFAULT_RETRIES && (isRetryableError(error) || error.retryable);
+      const shouldRetry = retryable
+        && attempt < DEFAULT_RETRIES
+        && (isRetryableError(error) || error.retryable);
       if (!shouldRetry) {
         return {
           paypalOrderId: body?.paypalOrderId || null,
@@ -87,6 +96,7 @@ async function requestJson(path, { method = 'POST', body, headers = {}, retryabl
       await delay(2 ** (attempt + 1) * 150);
     }
   }
+  /* eslint-enable no-await-in-loop */
 
   return {
     paypalOrderId: body?.paypalOrderId || null,
