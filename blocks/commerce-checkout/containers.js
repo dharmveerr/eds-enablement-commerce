@@ -69,6 +69,7 @@ import {
   rootLink,
   renderCartItemPromotions,
 } from '../../scripts/commerce.js';
+import { createPayPalCardFields, renderPayPalButtons } from '../../scripts/paypal-sdk.js';
 
 // Constants
 import {
@@ -116,35 +117,15 @@ export const CONTAINERS = Object.freeze({
   CART_COUPONS: 'cartCoupons',
   GIFT_CARDS: 'giftCards',
   CART_GIFT_OPTIONS: 'cartGiftOptions',
+  PAYPAL_METHODS: 'paypalMethods',
 });
 
-/**
- * A Map to store the API of rendered containers.
- * The key is a unique string ID, and the value is the containers's API object.
- * (e.g., { setProps: (props) => {...}, remove: () => {...} })
- */
 const registry = new Map();
-
-/**
- * Checks if a container with the given ID has been rendered.
- * This is used to prevent multiple instances of the same container from being rendered.
- * @param {string} id - The unique ID of the container to check.
- * @returns {boolean} - Returns true if the container has been rendered, false otherwise.
- */
 export const hasContainer = (id) => registry.has(id);
-
-/**
- * Helper to get a container from the registry or render and register it if not present.
- * @async
- * @param {string} id - Unique identifier for the container.
- * @param {Function} renderFn - Async function that renders the container.
- * @returns {Promise<Object>} - The rendered container API.
- */
 const renderContainer = async (id, renderFn) => {
   if (registry.has(id)) {
     return registry.get(id);
   }
-
   try {
     const container = await renderFn();
     registry.set(id, container);
@@ -154,232 +135,77 @@ const renderContainer = async (id, renderFn) => {
     throw error;
   }
 };
-
-/**
- * Unmounts and removes a container from the registry.
- * This function checks if the container is registered, removes it from the DOM,
- * and deletes its reference from the registry.
- * @param {string} id - The unique ID of the container to unmount.
- * @return {void}
- */
 export const unmountContainer = (id) => {
-  if (!registry.has(id)) {
-    return;
-  }
-
+  if (!registry.has(id)) return;
   const containerApi = registry.get(id);
   containerApi.remove();
   registry.delete(id);
 };
 
-/**
- * Renders the merged cart banner notification for authenticated users
- * @param {HTMLElement} container - DOM element to render the banner in
- * @returns {Promise<Object>} - The rendered merged cart banner component
- */
-export const renderMergedCartBanner = async (container) => renderContainer(
-  CONTAINERS.MERGED_CART_BANNER,
-  async () => CheckoutProvider.render(MergedCartBanner)(container),
-);
-
-/**
- * Renders the checkout page header with title and styling
- * @param {HTMLElement} container - DOM element to render the header in
- * @param {string} title - The title to display in the header
- * @returns {Promise<Object>} - The rendered checkout header component
- */
-export const renderCheckoutHeader = async (container, title) => renderContainer(
-  CONTAINERS.CHECKOUT_HEADER,
-  async () => UI.render(Header, {
-    className: CHECKOUT_HEADER_CLASS,
-    divider: true,
-    level: 1,
-    size: 'large',
-    title,
-  })(container),
-);
-
-/**
- * Renders server error handling with retry functionality and error state management
- * @param {HTMLElement} container - DOM element to render the error component in
- * @param {HTMLElement} contentElement - Main content element to add error styling to
- * @returns {Promise<Object>} - The rendered server error component
- */
-export const renderServerError = async (container, contentElement) => renderContainer(
-  CONTAINERS.SERVER_ERROR,
-  async () => CheckoutProvider.render(ServerError, {
-    autoScroll: true,
-    onRetry: (error) => {
-      if (error.code === 'PERMISSION_DENIED') {
-        document.location.reload();
-        return;
-      }
-
-      contentElement.classList.remove(CHECKOUT_ERROR_CLASS);
-    },
-    onServerError: () => {
-      contentElement.classList.add(CHECKOUT_ERROR_CLASS);
-    },
-  })(container),
-);
-
-/**
- * Renders out of stock handling with cart navigation and product update options
- * @param {HTMLElement} container - DOM element to render the component in
- * @returns {Promise<Object>} - The rendered out-of-stock component
- */
-export const renderOutOfStock = async (container) => renderContainer(
-  CONTAINERS.OUT_OF_STOCK,
-  async () => CheckoutProvider.render(OutOfStock, {
-    routeCart: () => rootLink('/cart'),
-    onCartProductsUpdate: (items) => {
-      cartApi.updateProductsFromCart(items).catch(console.error);
-    },
-  })(container),
-);
-
-/**
- * Renders the login form for guest checkout with authentication options
- * Uses the existing 'authenticated' event system for decoupled communication
- * @param {HTMLElement} container - DOM element to render the login form in
- * @returns {Promise<Object>} - The rendered login form component
- */
-export const renderLoginForm = async (container) => renderContainer(
-  CONTAINERS.LOGIN_FORM,
-  async () => CheckoutProvider.render(LoginForm, {
-    name: LOGIN_FORM_NAME,
-    onSignInClick: async (initialEmailValue) => {
-      const signInForm = document.createElement('div');
-
-      AuthProvider.render(AuthCombine, {
-        signInFormConfig: {
-          renderSignUpLink: true,
-          initialEmailValue,
-          // No onSuccessCallback needed - the 'authenticated' event will be fired automatically
-        },
-        signUpFormConfig: {
-          slots: {
-            ...authPrivacyPolicyConsentSlot,
-          },
-        },
-        resetPasswordFormConfig: {},
-      })(signInForm);
-
-      await showModal(signInForm);
-    },
-    onSignOutClick: () => {
-      authApi.revokeCustomerToken();
-    },
-  })(container),
-);
-
-/**
- * Renders the shipping address form skeleton (initial placeholder)
- * @param {HTMLElement} container - DOM element to render the form in
- * @returns {Promise<Object>} - The rendered shipping address form skeleton
- */
-export const renderShippingAddressFormSkeleton = async (container) => renderContainer(
-  CONTAINERS.SHIPPING_ADDRESS_FORM_SKELETON,
-  async () => AccountProvider.render(AddressForm, {
-    fieldIdPrefix: 'shipping',
-    isOpen: true,
-    showFormLoader: true,
-  })(container),
-);
-
-/**
- * Renders the billing address form skeleton (initial placeholder)
- * @param {HTMLElement} container - DOM element to render the form in
- * @returns {Promise<Object>} - The rendered billing address form skeleton
- */
-export const renderBillingAddressFormSkeleton = async (container) => renderContainer(
-  CONTAINERS.BILLING_ADDRESS_FORM_SKELETON,
-  async () => AccountProvider.render(AddressForm, {
-    fieldIdPrefix: 'billing',
-    isOpen: true,
-    showFormLoader: true,
-  })(container),
-);
-
-/**
- * Renders checkbox to set billing address same as shipping address - original regular checkout functionality
- * @param {HTMLElement} container - DOM element to render the checkbox in
- * @returns {Promise<Object>} - The rendered bill to shipping address component
- */
-export const renderBillToShippingAddress = async (container) => renderContainer(
-  CONTAINERS.BILL_TO_SHIPPING_ADDRESS,
-  async () => {
-    const setBillingAddressOnCart = setAddressOnCart({ type: 'billing' });
-
-    return CheckoutProvider.render(BillToShippingAddress, {
-      onChange: (checked) => {
-        const billingFormValues = events.lastPayload('checkout/addresses/billing');
-
-        if (!checked && billingFormValues) {
-          setBillingAddressOnCart(billingFormValues);
-        }
-      },
-    })(container);
+export const renderMergedCartBanner = async (container) => renderContainer(CONTAINERS.MERGED_CART_BANNER, async () => CheckoutProvider.render(MergedCartBanner)(container));
+export const renderCheckoutHeader = async (container, title) => renderContainer(CONTAINERS.CHECKOUT_HEADER, async () => UI.render(Header, {
+  className: CHECKOUT_HEADER_CLASS, divider: true, level: 1, size: 'large', title,
+})(container));
+export const renderServerError = async (container, contentElement) => renderContainer(CONTAINERS.SERVER_ERROR, async () => CheckoutProvider.render(ServerError, {
+  autoScroll: true,
+  onRetry: (error) => {
+    if (error.code === 'PERMISSION_DENIED') {
+      document.location.reload();
+      return;
+    }
+    contentElement.classList.remove(CHECKOUT_ERROR_CLASS);
   },
-);
+  onServerError: () => {
+    contentElement.classList.add(CHECKOUT_ERROR_CLASS);
+  },
+})(container));
+export const renderOutOfStock = async (container) => renderContainer(CONTAINERS.OUT_OF_STOCK, async () => CheckoutProvider.render(OutOfStock, { routeCart: () => rootLink('/cart'), onCartProductsUpdate: (items) => { cartApi.updateProductsFromCart(items).catch(console.error); } })(container));
+export const renderLoginForm = async (container) => renderContainer(CONTAINERS.LOGIN_FORM, async () => CheckoutProvider.render(LoginForm, { name: LOGIN_FORM_NAME, onSignInClick: async (initialEmailValue) => { const signInForm = document.createElement('div'); AuthProvider.render(AuthCombine, { signInFormConfig: { renderSignUpLink: true, initialEmailValue }, signUpFormConfig: { slots: { ...authPrivacyPolicyConsentSlot } }, resetPasswordFormConfig: {} })(signInForm); await showModal(signInForm); }, onSignOutClick: () => { authApi.revokeCustomerToken(); } })(container));
+export const renderShippingAddressFormSkeleton = async (container) => renderContainer(CONTAINERS.SHIPPING_ADDRESS_FORM_SKELETON, async () => AccountProvider.render(AddressForm, { fieldIdPrefix: 'shipping', isOpen: true, showFormLoader: true })(container));
+export const renderBillingAddressFormSkeleton = async (container) => renderContainer(CONTAINERS.BILLING_ADDRESS_FORM_SKELETON, async () => AccountProvider.render(AddressForm, { fieldIdPrefix: 'billing', isOpen: true, showFormLoader: true })(container));
 
-/**
- * Renders available shipping methods with selection interface
- * @param {HTMLElement} container - DOM element to render shipping methods in
- * @returns {Promise<Object>} - The rendered shipping methods component
- */
-export const renderShippingMethods = async (container) => renderContainer(
-  CONTAINERS.SHIPPING_METHODS,
-  async () => CheckoutProvider.render(ShippingMethods)(container),
-);
+export const renderPaymentMethods = async (container) => renderContainer(CONTAINERS.PAYMENT_METHODS, async () => {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'checkout-payment-methods';
 
-/**
- * Renders payment methods with credit card integration - original regular checkout functionality
- * @param {HTMLElement} container - DOM element to render payment methods in
- * @returns {Promise<Object>} - The rendered payment methods component
- */
-export const renderPaymentMethods = async (container) => renderContainer(
-  CONTAINERS.PAYMENT_METHODS,
-  async () => CheckoutProvider.render(PaymentMethods, {
-    slots: {
-      Methods: {
-        [PaymentMethodCode.CREDIT_CARD]: {
-          render: (ctx) => {
-            const $creditCard = document.createElement('div');
+  const paypalSection = document.createElement('section');
+  paypalSection.className = 'checkout-payment-methods__paypal';
 
-            PaymentServices.render(CreditCard)($creditCard);
+  const paypalHeading = document.createElement('h3');
+  const checkoutPlaceholders = await fetchPlaceholders('placeholders/checkout.json');
+  paypalHeading.textContent = checkoutPlaceholders?.Checkout?.PayPal?.heading || 'PayPal';
+  paypalSection.appendChild(paypalHeading);
 
-            ctx.replaceHTML($creditCard);
-          },
-        },
-        [PaymentMethodCode.SMART_BUTTONS]: {
-          enabled: false,
-        },
-        [PaymentMethodCode.APPLE_PAY]: {
-          enabled: false,
-        },
-        [PaymentMethodCode.APM]: {
-          enabled: false,
-        },
-        [PaymentMethodCode.GOOGLE_PAY]: {
-          enabled: false,
-        },
-        [PaymentMethodCode.VAULT]: {
-          enabled: false,
-        },
-        [PaymentMethodCode.FASTLANE]: {
-          enabled: false,
-        },
-      },
-    },
-  })(container),
-);
+  const buttonsMount = document.createElement('div');
+  buttonsMount.className = 'checkout-payment-methods__paypal-buttons';
+  paypalSection.appendChild(buttonsMount);
 
-/**
- * Renders terms and conditions with agreement slots and manual consent mode
- * @param {HTMLElement} container - DOM element to render the terms in
- * @returns {Promise<Object>} - The rendered terms and conditions component
- */
+  const cardFieldsMount = document.createElement('div');
+  cardFieldsMount.className = 'checkout-payment-methods__paypal-card-fields';
+  paypalSection.appendChild(cardFieldsMount);
+
+  wrapper.appendChild(paypalSection);
+
+  await renderPayPalButtons(buttonsMount, {
+    createOrder: async () => Promise.resolve('paypal-order-placeholder'),
+    onError: (error) => console.error('PayPal Buttons error', error),
+  });
+
+  await createPayPalCardFields({
+    createOrder: async () => 'paypal-order-placeholder',
+  });
+
+  container.appendChild(wrapper);
+  return { remove: () => wrapper.remove() };
+});
+
+export const renderPlaceOrder = async (container, { handleValidation, handlePlaceOrder }) => renderContainer(CONTAINERS.PLACE_ORDER_BUTTON, async () => CheckoutProvider.render(PlaceOrder, { handleValidation, handlePlaceOrder })(container));
+export const renderShippingMethods = async (container) => renderContainer(CONTAINERS.SHIPPING_METHODS, async () => CheckoutProvider.render(ShippingMethods)(container));
+export const renderBillToShippingAddress = async (container) => renderContainer(CONTAINERS.BILL_TO_SHIPPING_ADDRESS, async () => CheckoutProvider.render(BillToShippingAddress)(container));
+export const renderOrderSummary = async (container) => renderContainer(CONTAINERS.ORDER_SUMMARY, async () => CheckoutProvider.render(OrderSummary)(container));
+export const renderCartSummaryList = async (container) => renderContainer(CONTAINERS.CART_SUMMARY_LIST, async () => CartProvider.render(CartSummaryList)(container));
+export const renderGiftOptions = async (container) => renderContainer(CONTAINERS.GIFT_OPTIONS, async () => CartProvider.render(GiftOptions)(container));
+
 export const renderTermsAndConditions = async (container) => renderContainer(
   CONTAINERS.TERMS_AND_CONDITIONS,
   async () => CheckoutProvider.render(TermsAndConditions, {
@@ -395,175 +221,6 @@ export const renderTermsAndConditions = async (container) => renderContainer(
   })(container),
 );
 
-/**
- * Renders estimate shipping form for order summary slot
- * @param {HTMLElement} ctx - The slot context element
- * @returns {void}
- */
-export const renderEstimateShipping = (ctx) => {
-  const estimateShippingForm = document.createElement('div');
-  CheckoutProvider.render(EstimateShipping)(estimateShippingForm);
-  ctx.appendChild(estimateShippingForm);
-};
-
-/**
- * Renders cart coupons for order summary slot
- * @param {HTMLElement} ctx - The slot context element
- * @returns {void}
- */
-export const renderCartCoupons = (ctx) => {
-  const coupons = document.createElement('div');
-  CartProvider.render(Coupons)(coupons);
-  ctx.appendChild(coupons);
-};
-
-/**
- * Renders gift cards for order summary slot
- * @param {HTMLElement} ctx - The slot context element
- * @returns {void}
- */
-export const renderGiftCards = (ctx) => {
-  const giftCards = document.createElement('div');
-  CartProvider.render(GiftCards)(giftCards);
-  ctx.appendChild(giftCards);
-};
-
-/**
- * Renders gift options for cart summary list footer slot
- * @param {HTMLElement} ctx - The slot context element
- * @returns {void}
- */
-export const renderCartGiftOptions = (ctx) => {
-  const giftOptions = document.createElement('div');
-
-  CartProvider.render(GiftOptions, {
-    item: ctx.item,
-    view: 'product',
-    dataSource: 'cart',
-    isEditable: false,
-    handleItemsLoading: ctx.handleItemsLoading,
-    handleItemsError: ctx.handleItemsError,
-    onItemUpdate: ctx.onItemUpdate,
-    slots: {
-      SwatchImage: swatchImageSlot,
-    },
-  })(giftOptions);
-
-  ctx.appendChild(giftOptions);
-};
-
-// ============================================================================
-// SUMMARY CONTAINERS
-// ============================================================================
-
-/**
- * Renders order summary with estimate shipping, coupons, and gift cards slots
- * @param {HTMLElement} container - DOM element to render order summary in
- * @returns {Promise<Object>} - The rendered order summary component
- */
-export const renderOrderSummary = async (container) => renderContainer(
-  CONTAINERS.ORDER_SUMMARY,
-  async () => CartProvider.render(OrderSummary, {
-    slots: {
-      EstimateShipping: renderEstimateShipping,
-      Coupons: renderCartCoupons,
-      GiftCards: renderGiftCards,
-    },
-  })(container),
-);
-
-/**
- * Renders cart summary list with custom heading, thumbnail and gift options slots
- * @param {HTMLElement} container - DOM element to render cart summary list in
- * @returns {Promise<Object>} - The rendered cart summary list component
- */
-export const renderCartSummaryList = async (container) => renderContainer(
-  CONTAINERS.CART_SUMMARY_LIST,
-  async () => {
-    const placeholders = await fetchPlaceholders('placeholders/checkout.json');
-
-    return CartProvider.render(CartSummaryList, {
-      variant: 'secondary',
-      slots: {
-        Heading: (headingCtx) => {
-          const title = placeholders?.Checkout?.Summary?.heading;
-
-          const cartSummaryListHeading = document.createElement('div');
-          cartSummaryListHeading.classList.add('cart-summary-list__heading');
-
-          const cartSummaryListHeadingText = document.createElement('div');
-          cartSummaryListHeadingText.classList.add(
-            'cart-summary-list__heading-text',
-          );
-
-          cartSummaryListHeadingText.innerText = title?.replace(
-            '({count})',
-            headingCtx.count ? `(${headingCtx.count})` : '',
-          );
-          const editCartLink = document.createElement('a');
-          editCartLink.classList.add('cart-summary-list__edit');
-          editCartLink.href = rootLink('/cart');
-          editCartLink.rel = 'noreferrer';
-          editCartLink.innerText = placeholders?.Checkout?.Summary?.Edit;
-          editCartLink.setAttribute('aria-label', `${placeholders?.Checkout?.Summary?.Edit} cart`);
-
-          cartSummaryListHeading.appendChild(cartSummaryListHeadingText);
-          cartSummaryListHeading.appendChild(editCartLink);
-          headingCtx.appendChild(cartSummaryListHeading);
-
-          headingCtx.onChange((nextHeadingCtx) => {
-            cartSummaryListHeadingText.innerText = title?.replace(
-              '({count})',
-              nextHeadingCtx.count ? `(${nextHeadingCtx.count})` : '',
-            );
-          });
-        },
-        Thumbnail: (ctx) => {
-          const { item, defaultImageProps } = ctx;
-          tryRenderAemAssetsImage(ctx, {
-            alias: item.sku,
-            imageProps: defaultImageProps,
-
-            params: {
-              width: defaultImageProps.width,
-              height: defaultImageProps.height,
-            },
-          });
-        },
-        Footer: (ctx) => {
-          // Promotion / discount rule labels
-          renderCartItemPromotions(ctx);
-          // Gift Options
-          renderCartGiftOptions(ctx);
-        },
-      },
-    })(container);
-  },
-);
-
-/**
- * Renders place order button with handler functions - follows multi-step pattern
- * @param {HTMLElement} container - DOM element to render the place order button in
- * @param {Object} options - Configuration object with handler functions
- * @param {Function} options.handleValidation - Validation handler function
- * @param {Function} options.handlePlaceOrder - Place order handler function
- * @returns {Promise<Object>} - The rendered place order component
- */
-export const renderPlaceOrder = async (container, options = {}) => renderContainer(
-  CONTAINERS.PLACE_ORDER_BUTTON,
-  async () => CheckoutProvider.render(PlaceOrder, {
-    handleValidation: options.handleValidation,
-    handlePlaceOrder: options.handlePlaceOrder,
-  })(container),
-);
-
-/**
- * Renders customer shipping addresses selector/form for authenticated users - original regular checkout functionality
- * @param {HTMLElement} container - DOM element to render shipping addresses in
- * @param {Object} formRef - React-style ref for form reference
- * @param {Object} data - Cart data containing shipping address information
- * @returns {Promise<Object>} - The rendered customer shipping addresses component
- */
 export const renderCustomerShippingAddresses = async (container, formRef, data) => renderContainer(
   CONTAINERS.CUSTOMER_SHIPPING_ADDRESSES,
   async () => {
@@ -577,7 +234,6 @@ export const renderCustomerShippingAddresses = async (container, formRef, data) 
 
     const shippingAddressCache = sessionStorage.getItem(SHIPPING_ADDRESS_DATA_KEY);
 
-    // Clear persisted shipping address if cart has a shipping address
     if (cartShippingAddress && shippingAddressCache) {
       sessionStorage.removeItem(SHIPPING_ADDRESS_DATA_KEY);
     }
@@ -591,7 +247,6 @@ export const renderCustomerShippingAddresses = async (container, formRef, data) 
     const hasCartShippingAddress = Boolean(data.shippingAddresses?.[0]);
     let isFirstRenderShipping = true;
 
-    // Create address setters with constants moved inside
     const setShippingAddressOnCart = setAddressOnCart({
       type: 'shipping',
       debounceMs: DEBOUNCE_TIME,
@@ -630,13 +285,6 @@ export const renderCustomerShippingAddresses = async (container, formRef, data) 
   },
 );
 
-/**
- * Renders customer billing addresses selector/form for authenticated users - original regular checkout functionality
- * @param {HTMLElement} container - DOM element to render billing addresses in
- * @param {Object} formRef - React-style ref for form reference
- * @param {Object} data - Cart data containing billing address information
- * @returns {Promise<Object>} - The rendered customer billing addresses component
- */
 export const renderCustomerBillingAddresses = async (container, formRef, data) => renderContainer(
   CONTAINERS.CUSTOMER_BILLING_ADDRESSES,
   async () => {
@@ -650,7 +298,6 @@ export const renderCustomerBillingAddresses = async (container, formRef, data) =
 
     const billingAddressCache = sessionStorage.getItem(BILLING_ADDRESS_DATA_KEY);
 
-    // Clear persisted billing address if cart has a billing address
     if (cartBillingAddress && billingAddressCache) {
       sessionStorage.removeItem(BILLING_ADDRESS_DATA_KEY);
     }
@@ -664,7 +311,6 @@ export const renderCustomerBillingAddresses = async (container, formRef, data) =
     const hasCartBillingAddress = Boolean(data.billingAddress);
     let isFirstRenderBilling = true;
 
-    // Create address setter with constants moved inside
     const setBillingAddressOnCart = setAddressOnCart({
       type: 'billing',
       debounceMs: DEBOUNCE_TIME,
@@ -697,14 +343,6 @@ export const renderCustomerBillingAddresses = async (container, formRef, data) =
   },
 );
 
-/**
- * Renders address form for guest users (shipping or billing) - original regular checkout functionality
- * @param {HTMLElement} container - DOM element to render address form in
- * @param {Object} formRef - React-style ref for form reference
- * @param {Object} data - Cart data containing address information
- * @param {string} addressType - Type of address form ('shipping' or 'billing')
- * @returns {Promise<Object>} - The rendered address form component
- */
 export const renderAddressForm = async (container, formRef, data, addressType) => {
   const isShipping = addressType === 'shipping';
   const containerKey = isShipping ? CONTAINERS.SHIPPING_ADDRESS_FORM : CONTAINERS.BILLING_ADDRESS_FORM;
@@ -714,12 +352,10 @@ export const renderAddressForm = async (container, formRef, data, addressType) =
     async () => {
       const placeholders = await fetchPlaceholders('placeholders/checkout.json');
 
-      // Get address type specific configurations
       const cartAddress = getCartAddress(data, addressType);
       const addressDataKey = isShipping ? SHIPPING_ADDRESS_DATA_KEY : BILLING_ADDRESS_DATA_KEY;
       const addressCache = sessionStorage.getItem(addressDataKey);
 
-      // Clear persisted address if cart has an address
       if (cartAddress && addressCache) {
         sessionStorage.removeItem(addressDataKey);
       }
@@ -727,13 +363,11 @@ export const renderAddressForm = async (container, formRef, data, addressType) =
       let isFirstRender = true;
       const hasCartAddress = Boolean(isShipping ? data.shippingAddresses?.[0] : data.billingAddress);
 
-      // Create address setter with appropriate API
       const setAddressOnCartFn = setAddressOnCart({
         type: addressType,
         debounceMs: DEBOUNCE_TIME,
       });
 
-      // Create shipping cost estimator (only for shipping addresses)
       const estimateShippingCostOnCart = isShipping ? estimateShippingCost({
         debounceMs: DEBOUNCE_TIME,
       }) : null;
@@ -745,7 +379,6 @@ export const renderAddressForm = async (container, formRef, data, addressType) =
 
       const storeConfig = checkoutApi.getStoreConfigCache();
 
-      // Address type specific configurations
       const formName = isShipping ? SHIPPING_FORM_NAME : BILLING_FORM_NAME;
       const addressTitle = isShipping
         ? placeholders?.Checkout?.Addresses?.shippingAddressTitle
@@ -771,7 +404,6 @@ export const renderAddressForm = async (container, formRef, data, addressType) =
           const canSetAddressOnCart = !isFirstRender || !hasCartAddress;
           if (canSetAddressOnCart) setAddressOnCartFn(values);
 
-          // Only estimate shipping cost for shipping addresses when no cart address exists
           if (isShipping && !hasCartAddress && estimateShippingCostOnCart) {
             estimateShippingCostOnCart(values);
           }
@@ -787,20 +419,3 @@ export const renderAddressForm = async (container, formRef, data, addressType) =
     },
   );
 };
-
-/**
- * Renders order-level gift options with swatch image integration
- * @param {HTMLElement} container - DOM element to render gift options in
- * @returns {Promise<Object>} - The rendered gift options component
- */
-export const renderGiftOptions = async (container) => renderContainer(
-  CONTAINERS.GIFT_OPTIONS,
-  async () => CartProvider.render(GiftOptions, {
-    view: 'order',
-    dataSource: 'cart',
-    isEditable: false,
-    slots: {
-      SwatchImage: swatchImageSlot,
-    },
-  })(container),
-);

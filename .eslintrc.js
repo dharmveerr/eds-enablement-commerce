@@ -3,6 +3,7 @@ module.exports = {
   extends: 'airbnb-base',
   env: {
     browser: true,
+    es2020: true,
   },
   parser: '@babel/eslint-parser',
   parserOptions: {
@@ -33,6 +34,10 @@ module.exports = {
       rules: {
         'import/no-extraneous-dependencies': 'off',
       },
+    },
+    {
+      files: ['**/*.test.js'],
+      env: { jest: true },
     },
   ],
 };

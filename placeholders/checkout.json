@@ -7,6 +7,30 @@
     {
       "Key": "Checkout.Summary.Edit",
       "Value": "Edit"
+    },
+    {
+      "Key": "Checkout.PayPal.heading",
+      "Value": "PayPal"
+    },
+    {
+      "Key": "Checkout.PayPal.expressLabel",
+      "Value": "Checkout with PayPal"
+    },
+    {
+      "Key": "Checkout.PayPal.ccLabel",
+      "Value": "Debit or Credit Card"
+    },
+    {
+      "Key": "Checkout.PayPal.loading",
+      "Value": "Loading PayPal payment options..."
+    },
+    {
+      "Key": "Checkout.PayPal.error",
+      "Value": "PayPal payment options are temporarily unavailable. Please try again."
     }
-  ]
+  ],
+  "total": 7,
+  "offset": 0,
+  "limit": 7,
+  ":type": "sheet"
 }
