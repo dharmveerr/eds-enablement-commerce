@@ -95,3 +95,48 @@
     flex-basis: auto;
   }
 }
+
+/* PayPal express wallets */
+.cart__express-checkout:empty {
+    display: none;
+}
+
+.cart__express-checkout .paypal-express {
+    display: grid;
+    gap: var(--spacing-xxsmall);
+    margin-top: var(--spacing-xsmall);
+}
+
+.cart__express-checkout .paypal-express__button {
+    border: 0;
+    border-radius: var(--shape-border-radius-1);
+    cursor: pointer;
+    font: var(--type-button-2-font);
+    letter-spacing: var(--type-button-2-letter-spacing);
+    min-height: 44px;
+}
+
+.cart__express-checkout .paypal-express__button--paypal {
+    background-color: #ffc439;
+    color: #003087;
+}
+
+.cart__express-checkout .paypal-express__button--apple_pay,
+.cart__express-checkout .paypal-express__button--google_pay {
+    background-color: #000;
+    color: #fff;
+}
+
+.cart__express-checkout .paypal-express__button[disabled] {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.cart__express-checkout .paypal-express__status {
+    font: var(--type-details-caption-2-font);
+    margin: 0;
+}
+
+.cart__express-checkout .paypal-express__status:empty {
+    display: none;
+}

@@ -35,9 +35,5 @@ module.exports = {
         'import/no-extraneous-dependencies': 'off',
       },
     },
-    {
-      files: ['**/*.test.js'],
-      env: { jest: true },
-    },
   ],
 };

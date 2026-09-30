@@ -9,6 +9,7 @@ package-lock.json
 test/*
 postinstall.js
 build.mjs
+scripts/setup/
 cypress/
 tools/picker/src/*
 tools/pdp-metadata/*

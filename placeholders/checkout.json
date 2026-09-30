@@ -9,28 +9,64 @@
       "Value": "Edit"
     },
     {
-      "Key": "Checkout.PayPal.heading",
-      "Value": "PayPal"
-    },
-    {
-      "Key": "Checkout.PayPal.expressLabel",
-      "Value": "Checkout with PayPal"
-    },
-    {
-      "Key": "Checkout.PayPal.ccLabel",
-      "Value": "Debit or Credit Card"
-    },
-    {
       "Key": "Checkout.PayPal.loading",
-      "Value": "Loading PayPal payment options..."
+      "Value": "Loading secure card fields…"
     },
     {
-      "Key": "Checkout.PayPal.error",
-      "Value": "PayPal payment options are temporarily unavailable. Please try again."
+      "Key": "Checkout.PayPal.ineligible",
+      "Value": "Card payments are not available for this order."
+    },
+    {
+      "Key": "Checkout.PayPal.unavailable",
+      "Value": "PayPal card payments are temporarily unavailable. Please choose another payment method."
+    },
+    {
+      "Key": "Checkout.PayPal.name",
+      "Value": "Name on card"
+    },
+    {
+      "Key": "Checkout.PayPal.number",
+      "Value": "Card number"
+    },
+    {
+      "Key": "Checkout.PayPal.expiry",
+      "Value": "Expiration date"
+    },
+    {
+      "Key": "Checkout.PayPal.cvv",
+      "Value": "Security code"
+    },
+    {
+      "Key": "Checkout.PayPal.processing",
+      "Value": "Processing your payment…"
+    },
+    {
+      "Key": "Checkout.PayPal.authenticating",
+      "Value": "Confirming your card with your bank…"
+    },
+    {
+      "Key": "Checkout.PayPal.expressApproved",
+      "Value": "Payment approved with PayPal. Review your details and place the order."
+    },
+    {
+      "Key": "Checkout.PayPal.canceled",
+      "Value": "Card authentication was canceled. You can try again."
+    },
+    {
+      "Key": "Checkout.PayPal.declined",
+      "Value": "Your card was declined. Please try a different payment method."
+    },
+    {
+      "Key": "Checkout.PayPal.pending",
+      "Value": "Your payment is being processed. Do not retry; we will confirm your order shortly."
+    },
+    {
+      "Key": "Checkout.PayPal.reconcile",
+      "Value": "We could not confirm your payment. Please do not retry — contact support with your cart reference."
+    },
+    {
+      "Key": "Checkout.PayPal.failed",
+      "Value": "We could not process your card payment. Please try again."
     }
-  ],
-  "total": 7,
-  "offset": 0,
-  "limit": 7,
-  ":type": "sheet"
+  ]
 }

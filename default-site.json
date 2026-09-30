@@ -27,10 +27,12 @@
     "default": {
       "commerce-core-endpoint": "{ENDPOINT}",
       "commerce-endpoint": "{CS_ENDPOINT}",
-      "paypal-client-id": "$PAYPAL_CLIENT_ID",
-      "paypal-sdk-components": "buttons,card-fields",
-      "paypal-intent": "capture",
-      "paypal-currency": "USD",
+      "paypal-environment": "sandbox",
+      "paypal-app-builder-endpoint": "{PAYPAL_APP_BUILDER_ENDPOINT}",
+      "paypal-payment-method-code": "paypal_oope",
+      "paypal-express-methods": "paypal,apple_pay",
+      "paypal-express-cart": "true",
+      "paypal-express-checkout": "true",
       "headers": {
         "all": {
           "Store": "default"
