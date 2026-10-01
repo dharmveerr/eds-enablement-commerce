@@ -296,3 +296,111 @@
         margin-top: 0;
     }
 }
+
+/* PayPal Expanded Checkout (Card Fields) */
+.checkout__paypal-card-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xsmall);
+}
+
+.checkout__paypal-status,
+.checkout__paypal-message {
+    font: var(--type-body-2-default-font);
+    letter-spacing: var(--type-body-2-default-letter-spacing);
+    margin: 0;
+}
+
+.checkout__paypal-message[data-tone='error'] {
+    color: var(--color-alert-800);
+}
+
+.checkout__paypal-message[data-tone='info'] {
+    color: var(--color-neutral-800);
+}
+
+.checkout__paypal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xsmall);
+}
+
+.checkout__paypal-field--name,
+.checkout__paypal-field--number {
+    grid-column: 1 / -1;
+}
+
+.checkout__paypal-label {
+    display: block;
+    font: var(--type-details-caption-2-font);
+    letter-spacing: var(--type-details-caption-2-letter-spacing);
+    margin-bottom: var(--spacing-xxsmall);
+}
+
+/* PayPal owns the hosted input inside this container; only the frame is themed here. */
+.checkout__paypal-mount {
+    border: 1px solid var(--color-neutral-500);
+    border-radius: var(--shape-border-radius-1);
+    min-height: 40px;
+    padding: 0 var(--spacing-xxsmall);
+}
+
+.checkout__paypal-card-fields[aria-busy='true'] .checkout__paypal-grid {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* PayPal express wallets */
+.checkout__express:empty {
+    display: none;
+}
+
+.checkout__express .paypal-express {
+    display: grid;
+    gap: var(--spacing-xxsmall);
+}
+
+.checkout__express .paypal-express__button {
+    border: 0;
+    border-radius: var(--shape-border-radius-1);
+    cursor: pointer;
+    font: var(--type-button-2-font);
+    letter-spacing: var(--type-button-2-letter-spacing);
+    min-height: 44px;
+}
+
+.checkout__express .paypal-express__button--paypal {
+    background-color: #ffc439;
+    color: #003087;
+}
+
+.checkout__express .paypal-express__button--apple_pay,
+.checkout__express .paypal-express__button--google_pay {
+    background-color: #000;
+    color: #fff;
+}
+
+.checkout__express .paypal-express__button[disabled] {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.checkout__express .paypal-express__status {
+    font: var(--type-details-caption-2-font);
+    margin: 0;
+}
+
+.checkout__express .paypal-express__status:empty {
+    display: none;
+}
+
+@media only screen and (min-width: 600px) {
+    .checkout__express .paypal-express {
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
+    }
+
+    .checkout__express .paypal-express__status {
+        grid-column: 1 / -1;
+    }
+}

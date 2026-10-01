@@ -39,6 +39,7 @@ import {
   getProductLink,
   renderCartItemPromotions,
 } from '../../scripts/commerce.js';
+import renderExpressButtons, { storeExpressApproval } from '../../scripts/paypal-express.js';
 
 export default async function decorate(block) {
   // Configuration
@@ -72,6 +73,7 @@ export default async function decorate(block) {
       </div>
       <div class="cart__right-column">
         <div class="cart__order-summary"></div>
+        <div class="cart__express-checkout"></div>
         <div class="cart__gift-options"></div>
       </div>
     </div>
@@ -85,6 +87,7 @@ export default async function decorate(block) {
   const $summary = fragment.querySelector('.cart__order-summary');
   const $emptyCart = fragment.querySelector('.cart__empty-cart');
   const $giftOptions = fragment.querySelector('.cart__gift-options');
+  const $expressCheckout = fragment.querySelector('.cart__express-checkout');
   const $rightColumn = fragment.querySelector('.cart__right-column');
 
   block.innerHTML = '';
@@ -299,6 +302,17 @@ export default async function decorate(block) {
       },
     })($giftOptions),
   ]);
+
+  // Express wallets only collect a buyer-approved PayPal order; capture and
+  // order placement always happen on checkout.
+  renderExpressButtons($expressCheckout, {
+    source: 'cart',
+    labels: placeholders?.Cart?.PayPal,
+    onApprove: (approval) => {
+      storeExpressApproval(approval);
+      window.location.href = rootLink(checkoutURL || '/checkout');
+    },
+  });
 
   let cartViewEventPublished = false;
   // Events

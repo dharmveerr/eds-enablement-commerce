@@ -61,6 +61,8 @@ import {
 } from '@dropins/storefront-checkout/lib/utils.js';
 
 import { showModal, swatchImageSlot } from './utils.js';
+import { renderPayPalCardFields } from './paypal-card-fields.js';
+import { getPayPalPaymentMethodCode, isPayPalConfigured } from '../../scripts/paypal-api.js';
 
 // External dependencies
 import {
@@ -350,6 +352,13 @@ export const renderPaymentMethods = async (container) => renderContainer(
             PaymentServices.render(CreditCard)($creditCard);
 
             ctx.replaceHTML($creditCard);
+          },
+        },
+        // PayPal Expanded Checkout (out-of-process payment method backed by App Builder)
+        [getPayPalPaymentMethodCode()]: {
+          enabled: isPayPalConfigured(),
+          render: (ctx) => {
+            renderPayPalCardFields(ctx);
           },
         },
         [PaymentMethodCode.SMART_BUTTONS]: {

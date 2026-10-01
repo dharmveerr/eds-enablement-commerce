@@ -26,6 +26,11 @@ import {
   removeOverlaySpinner,
 } from './utils.js';
 
+// PayPal Expanded Checkout
+import { adoptExpressApproval, submitPayPalCardPayment } from './paypal-card-fields.js';
+import { getPayPalPaymentMethodCode } from '../../scripts/paypal-api.js';
+import renderExpressButtons, { storeExpressApproval } from '../../scripts/paypal-express.js';
+
 // Fragment functions
 import {
   createCheckoutFragment,
@@ -65,7 +70,7 @@ import {
   TERMS_AND_CONDITIONS_FORM_NAME,
 } from './constants.js';
 
-import { rootLink } from '../../scripts/commerce.js';
+import { fetchPlaceholders, rootLink } from '../../scripts/commerce.js';
 
 // Initializers
 import '../../scripts/initializers/account.js';
@@ -90,6 +95,7 @@ export default async function decorate(block) {
   setMetaTags('Checkout');
   document.title = 'Checkout';
 
+  const placeholders = await fetchPlaceholders('placeholders/checkout.json');
   const cartData = events.lastPayload('cart/initialized');
   redirectToCartIfEmpty(cartData);
 
@@ -120,6 +126,7 @@ export default async function decorate(block) {
   const $loaderStatus = getElement(selectors.checkout.loaderStatus);
   const $mergedCartBanner = getElement(selectors.checkout.mergedCartBanner);
   const $heading = getElement(selectors.checkout.heading);
+  const $express = getElement(selectors.checkout.express);
   const $serverError = getElement(selectors.checkout.serverError);
   const $outOfStock = getElement(selectors.checkout.outOfStock);
   const $login = getElement(selectors.checkout.login);
@@ -172,6 +179,16 @@ export default async function decorate(block) {
           return;
         }
       }
+
+      // PayPal Expanded Checkout: the payment must be captured through App Builder
+      // before the Commerce order is placed. The card fields surface their own errors.
+      if (code === getPayPalPaymentMethodCode()) {
+        const captured = await submitPayPalCardPayment({ cartId });
+        if (!captured) {
+          return;
+        }
+      }
+
       await orderApi.placeOrder(cartId);
     } catch (error) {
       console.error(error);
@@ -229,6 +246,18 @@ export default async function decorate(block) {
 
     renderGiftOptions($giftOptions),
   ]);
+
+  // Express wallets only obtain a buyer-approved PayPal order. The approval is
+  // handed to the PayPal payment method, which is the single place that captures
+  // and places the order.
+  renderExpressButtons($express, {
+    source: 'checkout',
+    labels: placeholders?.Checkout?.PayPal,
+    onApprove: async (approval) => {
+      if (!adoptExpressApproval(approval)) storeExpressApproval(approval);
+      $paymentMethods.scrollIntoView({ block: 'center' });
+    },
+  });
 
   async function initializeCheckout(data) {
     await initReCaptcha(0);
